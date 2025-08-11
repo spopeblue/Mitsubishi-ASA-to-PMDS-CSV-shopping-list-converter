@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>CSV → TXT Converter (with PMDS)</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      padding: 2rem;
+      max-width: 800px;
+      margin: auto;
+    }
+    input[type="file"] {
+      margin-bottom: 1rem;
+    }
+    button {
+      padding: 0.5rem 1rem;
+      background: #007acc;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #005a99;
+    }
+  </style>
+</head>
+<body>
+  <h1>CSV → TXT Converter</h1>
+  <p>Select a CSV file to convert it to TXT so that it can be pasted into PMDS using the Edit->Paste From function</p>
+
+  <input type="file" id="csvFile" accept=".csv" />
+
+  <button onclick="convertFile()">Convert & Download</button>
+
+  <script>
+    function convertFile() {
+      const input = document.getElementById("csvFile");
+      const file = input.files[0];
+
+      if (!file) {
+        alert("Please select a CSV file.");
+        return;
+      }
+
+      const reader = new FileReader();
+
+      reader.onload = function (e) {
+        const text = e.target.result;
+
+        // Split into lines, process each
+        const lines = text.split(/\r?\n/);
+
+        const outputLines = lines.map(line => {
+          if (!line.trim()) return "\t\t\t\t"; // empty line → 4 tabs
+          return line.replace(/,/g, '\t') + '\t'.repeat(4);
+        });
+
+        const outputText = outputLines.join('\n');
+
+        // Build new filename: original name + "PMDS" + .txt
+        const baseName = file.name.replace(/\.[^/.]+$/, ""); // remove extension
+        const newFileName = `${baseName}PMDS.txt`;
+
+        // Create blob and download
+        const blob = new Blob([outputText], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = newFileName; // ← Uses "BaseNamePMDS.txt"
+        a.click();
+
+        URL.revokeObjectURL(url);
+      };
+
+      reader.onerror = () => {
+        alert("Error reading file.");
+      };
+
+      reader.readAsText(file, "utf-8");
+    }
+  </script>
+</body>
+</html>

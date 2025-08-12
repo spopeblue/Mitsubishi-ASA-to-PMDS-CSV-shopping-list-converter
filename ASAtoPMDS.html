@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Export from Mitsubishi ASA → Convert → Import to PMDS</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #111827;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --accent: #60a5fa;
+      --accent-2: #93c5fd;
+      --border: #1f2937;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color: var(--text);
+      background: linear-gradient(160deg, var(--bg), #0b1226 60%);
+    }
+    .container { max-width: 980px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+    header { text-align: center; margin-bottom: 2rem; }
+    h1 { font-size: clamp(1.6rem, 1.2rem + 2vw, 2.25rem); margin: 0 0 .5rem; letter-spacing: .3px; }
+    .subtitle { color: var(--muted); font-size: .95rem; }
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.25rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,.3);
+    }
+    .steps { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+    @media (min-width: 850px) { .steps { grid-template-columns: 1fr 1fr; } }
+    .step {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1rem;
+      background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
+    }
+    .step h2 { display: flex; align-items: baseline; gap: .5rem; font-size: 1.1rem; margin: .25rem 0 .75rem; letter-spacing: .2px; }
+    .step h2 .num {
+      display: inline-grid; place-items: center; width: 28px; height: 28px;
+      background: var(--accent); color: #08111f; font-weight: 700; border-radius: 999px;
+    }
+    .step p { margin: .25rem 0 .75rem; color: var(--text); }
+    .muted { color: var(--muted); }
+    img.stepimg {
+      width: 100%; height: auto; display: block;
+      border-radius: 12px; border: 1px solid var(--border);
+    }
+    .converter {
+      margin-top: 1.25rem; padding: 1rem; border: 1px dashed var(--border);
+      border-radius: 12px; background: linear-gradient(180deg, rgba(96,165,250,.08), rgba(96,165,250,.03));
+    }
+    .controls { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; margin-top: .5rem; }
+    input[type="file"] {
+      color: var(--text); background: #0b1221; border: 1px solid var(--border);
+      border-radius: 8px; padding: .5rem .75rem;
+    }
+    button {
+      padding: .6rem 1rem; border: 1px solid transparent; border-radius: 999px;
+      background: linear-gradient(180deg, var(--accent), var(--accent-2));
+      color: #0b1221; font-weight: 700; cursor: pointer; transition: transform .03s ease-in-out;
+    }
+    button:active { transform: translateY(1px); }
+    footer { margin-top: 2rem; color: var(--muted); text-align: center; font-size: .9rem; }
+    code.inline {
+      padding: 0 .25rem; border-radius: 4px; background: #0b1221;
+      border: 1px solid var(--border); color: var(--accent-2);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Export from Mitsubishi ASA → Convert → Import to PMDS</h1>
+      <p class="subtitle">Use these steps to export your list, convert it to a PMDS-ready text file, and paste it via AccuTerm.</p>
+    </header>
+
+    <section class="card">
+      <div class="steps">
+        <div class="step">
+          <h2><span class="num">1</span> Export from the web page</h2>
+          <p>Make sure <strong>“Set All Repl.”</strong> is checked. Then click the <strong>Download</strong> icon (down arrow).</p>
+          <img class="stepimg" src="step1.png" alt="Step 1 – Set All Repl and click download arrow">
+        </div>
+
+        <div class="step">
+          <h2><span class="num">2</span> Save as CSV</h2>
+          <p>In the menu, choose <strong>CSV format</strong>. Save the file somewhere you'll remember.</p>
+          <img class="stepimg" src="step2.png" alt="Step 2 – Choose CSV format">
+        </div>
+
+        <div class="step" style="grid-column: 1 / -1">
+          <h2><span class="num">3</span> Convert CSV → PMDS TXT</h2>
+          <p>Use the converter below. It replaces commas with tabs and appends four trailing tabs per line to match PMDS expectations.</p>
+          <div class="converter">
+            <div class="controls">
+              <input type="file" id="csvFile" accept=".csv" />
+              <button id="convertBtn" type="button">Convert &amp; Download</button>
+            </div>
+            <p class="muted">The downloaded file will be named like <code class="inline">YourFilePMDS.txt</code>.</p>
+          </div>
+        </div>
+
+        <div class="step" style="grid-column: 1 / -1">
+          <h2><span class="num">4</span> Import into PMDS (AccuTerm)</h2>
+          <p>Load the customer in AccuTerm, then go to <strong>Edit → Paste From…</strong> and select the TXT you just created.</p>
+          <img class="stepimg" src="step3.png" alt="Step 4 – AccuTerm Edit > Paste From">
+        </div>
+      </div>
+    </section>
+
+    <footer>Tip: After import, quickly verify quantities, part numbers and pricing against the original export.</footer>
+  </div>
+
+  <script>
+    // CSV -> PMDS TXT converter
+    function convertFile() {
+      const input = document.getElementById("csvFile");
+      const file = input.files && input.files[0];
+      if (!file) { alert("Please select a CSV file first."); return; }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const csvText = e.target.result;
+        const lines = csvText.split(/\r?\n/);
+
+        const outputLines = lines.map(line => {
+          if (!line.trim()) return "\t\t\t\t"; // empty line → 4 tabs
+          return line.replace(/,/g, "\t") + "\t\t\t\t";
+        });
+        const outputText = outputLines.join("\n");
+
+        const baseName = file.name.replace(/\.[^/.]+$/, "");
+        const newFileName = baseName + "PMDS.txt";
+
+        const blob = new Blob([outputText], { type: "text/plain" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = newFileName;
+        a.click();
+        URL.revokeObjectURL(url);
+      };
+      reader.onerror = () => alert("Error reading the CSV file.");
+      reader.readAsText(file, "utf-8");
+    }
+
+    document.getElementById("convertBtn").addEventListener("click", convertFile);
+  </script>
+</body>
+</html>

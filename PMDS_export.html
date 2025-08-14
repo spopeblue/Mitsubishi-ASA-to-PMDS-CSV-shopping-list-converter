@@ -106,7 +106,7 @@
 
         <div class="step" style="grid-column: 1 / -1">
           <h2><span class="num">3</span> Convert CSV → PMDS TXT (with de-dup)</h2>
-          <p>Use the converter below. It replaces commas with tabs, appends four trailing tabs per line, <strong>removes duplicate part numbers</strong>, and shows you which lines were duplicated.</p>
+          <p>Use the converter below. It replaces commas with tabs, as the Accuterm paste from function recognises tabs as carriage returns. It also appends four trailing tabs per line to get to the next line, <strong>removes duplicate part numbers</strong>, and shows you which lines were duplicated.</p>
           <div class="converter">
             <div class="controls">
               <input type="file" id="csvFile" accept=".csv" />

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Export → Convert → Import to PMDS</title>
+  <title>Mitsubishi ASA Export → Convert → Import to PMDS</title>
   <style>
     :root {
       --bg: #0f172a;
@@ -87,14 +87,14 @@
   <div class="container">
     <header>
       <h1>Export → Convert → Import to PMDS</h1>
-      <p class="subtitle">Use these steps to export your list, convert it to a PMDS-ready text file, and paste it via AccuTerm.</p>
+      <p class="subtitle">Use these steps to export your shopping list from ASA CAPS, convert it to a PMDS-ready text file, and paste it via AccuTerm.</p>
     </header>
 
     <section class="card">
       <div class="steps">
         <div class="step">
-          <h2><span class="num">1</span> Export from the web page</h2>
-          <p>Make sure <strong>“Set All Repl.”</strong> is checked. Then click the <strong>Download</strong> icon (down arrow).</p>
+          <h2><span class="num">1</span> Export from the Mitsubishi ASA CAPS shopping list</h2>
+          <p>Make sure <strong>“Set All Repl.”</strong> is checked. If you do not do this, the import into PMDS will fail on a supersession. Then click the <strong>Download</strong> icon (down arrow).</p>
           <img class="stepimg" src="step1.png" alt="Step 1 – Set All Repl and click download arrow">
         </div>
 
@@ -106,18 +106,18 @@
 
         <div class="step" style="grid-column: 1 / -1">
           <h2><span class="num">3</span> Convert CSV → PMDS TXT (with de-dup)</h2>
-          <p>Use the converter below. It replaces commas with tabs, appends four trailing tabs per line, <strong>removes duplicate part numbers</strong>, and produces a small report.</p>
+          <p>Use the converter below. It replaces commas with tabs, appends four trailing tabs per line, <strong>removes duplicate part numbers</strong>, and shows you which lines were duplicated.</p>
           <div class="converter">
             <div class="controls">
               <input type="file" id="csvFile" accept=".csv" />
               <button id="convertBtn" type="button">Convert &amp; Download</button>
             </div>
-            <p class="muted small">Assumptions: first row is data, no header; <strong>Part Number</strong> is column 1 and <strong>Quantity</strong> is column 2.</p>
+            <p class="muted small">Assumptions: <strong>Part Number</strong> is column 1 and <strong>Quantity</strong> is column 2.</p>
             <div id="report" class="report" hidden>
               <div class="grid">
                 <div>
                   <div>Total lines in file (excluding blanks): <strong id="totalLines">0</strong></div>
-                  <div>Data rows exported (after de-dup): <strong id="exportedRows">0</strong></div>
+                  <div>Data rows exported (after removing): <strong id="exportedRows">0</strong></div>
                 </div>
                 <div>
                   <div>Duplicate parts removed: <strong id="dupeCount">0</strong></div>
@@ -132,12 +132,13 @@
         <div class="step" style="grid-column: 1 / -1">
           <h2><span class="num">4</span> Import into PMDS (AccuTerm)</h2>
           <p>Load the customer in AccuTerm, then go to <strong>Edit → Paste From…</strong> and select the TXT you just created.</p>
+		  <p>You can add back in the duplicate lines after pasting using the '/E(line number)' command in PMDS</p>
           <img class="stepimg" src="step3.png" alt="Step 4 – AccuTerm Edit > Paste From">
         </div>
       </div>
     </section>
 
-    <footer>Tip: After import, quickly verify quantities, part numbers and pricing against the original export.</footer>
+    <footer>Tip: After import, quickly verify quantities, part numbers and pricing against the original shopping list.</footer>
   </div>
 
   <script>

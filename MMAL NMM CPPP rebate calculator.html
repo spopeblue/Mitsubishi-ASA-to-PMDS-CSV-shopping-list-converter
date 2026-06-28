@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rebate Margin Calculator</title>
+<style>
+  :root {
+    --ink: #1b1f23;
+    --ink-soft: #5a6168;
+    --paper: #f6f5f2;
+    --panel: #ffffff;
+    --line: #d8d5cd;
+    --tier1: #2c6e63;
+    --tier1-soft: #e3efec;
+    --tier2: #c0622b;
+    --tier2-soft: #f7e9de;
+    --profit: #1b1f23;
+    --profit-pos: #2c6e63;
+    --profit-neg: #b3392c;
+    --mono: 'IBM Plex Mono', 'SF Mono', Menlo, Consolas, monospace;
+    --sans: 'IBM Plex Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 32px 16px 64px;
+  }
+
+  .sheet {
+    width: 100%;
+    max-width: 680px;
+  }
+
+  header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 14px;
+    margin-bottom: 28px;
+  }
+
+  header .title {
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+
+  header .sub {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+
+  .inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .field {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 14px 16px;
+  }
+
+  .field label {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+
+  .field .inputwrap {
+    display: flex;
+    align-items: baseline;
+    border-bottom: 1.5px solid var(--ink);
+    padding-bottom: 4px;
+  }
+
+  .field .inputwrap .prefix {
+    font-family: var(--mono);
+    font-size: 22px;
+    color: var(--ink-soft);
+    margin-right: 4px;
+  }
+
+  .field input {
+    border: none;
+    background: none;
+    outline: none;
+    font-family: var(--mono);
+    font-size: 26px;
+    color: var(--ink);
+    width: 100%;
+    padding: 0;
+    font-weight: 500;
+  }
+
+  .field input::placeholder { color: #c4c0b6; }
+
+  /* remove number spinners */
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type=number] { -moz-appearance: textfield; }
+
+  .reset-row {
+    text-align: right;
+    margin-top: -8px;
+    margin-bottom: 22px;
+  }
+
+  .reset-btn {
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--ink-soft);
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 7px 14px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .reset-btn:hover {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+
+  .reset-btn:active {
+    transform: translateY(1px);
+  }
+
+  .reset-btn:focus-visible {
+    outline: 2px solid var(--tier1);
+    outline-offset: 2px;
+  }
+
+  .status-row {
+    text-align: center;
+    margin-bottom: 22px;
+  }
+
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+    background: var(--panel);
+  }
+
+  .status-pill .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--ink-soft);
+  }
+  .status-pill.below { color: var(--tier2); border-color: var(--tier2); }
+  .status-pill.below .dot { background: var(--tier2); }
+  .status-pill.above { color: var(--tier1); border-color: var(--tier1); }
+  .status-pill.above .dot { background: var(--tier1); }
+
+  .bridge {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 22px 22px 18px;
+    margin-bottom: 20px;
+  }
+
+  .bridge-label {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight: 600;
+    margin-bottom: 14px;
+  }
+
+  .bar-track {
+    position: relative;
+    height: 34px;
+    background: #ece9e2;
+    border-radius: 2px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+  }
+
+  .bar-seg {
+    position: absolute;
+    top: 0; bottom: 0;
+    transition: width 0.25s ease, left 0.25s ease;
+  }
+
+  .bar-seg.t1 { background: var(--tier1); }
+  .bar-seg.t2 { background: var(--tier2); }
+  .bar-seg.profit { background: repeating-linear-gradient(45deg, var(--ink) 0, var(--ink) 1px, transparent 1px, transparent 7px); opacity: 0.18; }
+
+  .bar-marker {
+    position: absolute;
+    top: -6px; bottom: -6px;
+    width: 2px;
+    background: var(--ink);
+  }
+  .bar-marker .mlabel {
+    position: absolute;
+    top: -22px;
+    transform: translateX(-50%);
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-soft);
+    white-space: nowrap;
+  }
+
+  .legend {
+    display: flex;
+    gap: 18px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-soft);
+  }
+  .legend .item { display: flex; align-items: center; gap: 6px; }
+  .legend .swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .legend .swatch.t1 { background: var(--tier1); }
+  .legend .swatch.t2 { background: var(--tier2); }
+
+  .breakdown {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+
+  .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--line);
+    font-size: 14px;
+  }
+  .row:last-child { border-bottom: none; }
+
+  .row .rlabel { color: var(--ink-soft); }
+  .row .rlabel .note { display: block; font-size: 11px; color: #9a958a; margin-top: 2px; }
+  .row .rvalue { font-family: var(--mono); font-weight: 600; font-size: 15px; }
+
+  .row.tier1 .rvalue { color: var(--tier1); }
+  .row.tier2 .rvalue { color: var(--tier2); }
+  .row.subtotal { background: #fbfaf8; }
+  .row.subtotal .rvalue { font-weight: 700; }
+
+  .result {
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 3px;
+    padding: 24px 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .result.negative { background: var(--profit-neg); }
+
+  .result-label {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #c9c5ba;
+    margin-bottom: 6px;
+  }
+  .result.negative .result-label { color: #f3d9d5; }
+
+  .result-dollar {
+    font-family: var(--mono);
+    font-size: 34px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .result-pct {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 600;
+    text-align: right;
+  }
+
+  .result-pct .pct-note {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #c9c5ba;
+    font-weight: 500;
+    margin-top: 4px;
+  }
+  .result.negative .pct-note { color: #f3d9d5; }
+
+  footer {
+    margin-top: 24px;
+    font-size: 11px;
+    color: #9a958a;
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  @media (max-width: 480px) {
+    .inputs { grid-template-columns: 1fr; }
+    .result { flex-direction: column; align-items: flex-start; }
+    .result-pct { text-align: left; }
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <header>
+    <div class="title">Rebate Margin Calc</div>
+    <div class="sub" id="clock"></div>
+  </header>
+
+  <div class="inputs">
+    <div class="field">
+      <label for="cost">Cost (per part)</label>
+      <div class="inputwrap">
+        <span class="prefix">$</span>
+        <input type="number" id="cost" inputmode="decimal" step="0.01" placeholder="0.00" value="100">
+      </div>
+    </div>
+    <div class="field">
+      <label for="sell">Sell price</label>
+      <div class="inputwrap">
+        <span class="prefix">$</span>
+        <input type="number" id="sell" inputmode="decimal" step="0.01" placeholder="0.00" value="80">
+      </div>
+    </div>
+  </div>
+
+  <div class="reset-row">
+    <button type="button" id="resetBtn" class="reset-btn">Reset</button>
+  </div>
+
+  <div class="status-row">
+    <span class="status-pill" id="statusPill"><span class="dot"></span><span id="statusText">—</span></span>
+  </div>
+
+  <div class="bridge">
+    <div class="bridge-label">Cost → Sell bridge</div>
+    <div class="bar-track" id="barTrack"></div>
+    <div class="legend">
+      <span class="item"><span class="swatch t1"></span> Tier 1 rebate (flat 12.5%)</span>
+      <span class="item"><span class="swatch t2"></span> Tier 2 rebate (0–25%, below-cost selling)</span>
+    </div>
+  </div>
+
+  <div class="breakdown">
+    <div class="row">
+      <div class="rlabel">Cost<span class="note">what you paid</span></div>
+      <div class="rvalue" id="outCost">$0.00</div>
+    </div>
+    <div class="row tier1">
+      <div class="rlabel">Tier 1 rebate<span class="note">12.5% of cost, always applies</span></div>
+      <div class="rvalue" id="outTier1">$0.00</div>
+    </div>
+    <div class="row tier2">
+      <div class="rlabel">Tier 2 rebate<span class="note" id="tier2Note">% below cost, capped at 25%</span></div>
+      <div class="rvalue" id="outTier2">$0.00</div>
+    </div>
+    <div class="row subtotal">
+      <div class="rlabel">Effective cost<span class="note">cost minus total rebate</span></div>
+      <div class="rvalue" id="outEffCost">$0.00</div>
+    </div>
+    <div class="row">
+      <div class="rlabel">Sell price<span class="note">what the customer pays</span></div>
+      <div class="rvalue" id="outSell">$0.00</div>
+    </div>
+  </div>
+
+  <div class="breakdown" id="targetBreakdown">
+    <div class="row">
+      <div class="rlabel">Break-even sell price<span class="note">price for 0% gross profit</span></div>
+      <div class="rvalue" id="outBreakEven">$0.00</div>
+    </div>
+    <div class="row">
+      <div class="rlabel">Sell price for 10% margin<span class="note">price for 10% gross profit</span></div>
+      <div class="rvalue" id="outTenPct">$0.00</div>
+    </div>
+  </div>
+
+  <div class="result" id="resultBox">
+    <div>
+      <div class="result-label">Gross profit</div>
+      <div class="result-dollar" id="outProfitDollar">$0.00</div>
+    </div>
+    <div class="result-pct">
+      <div id="outProfitPct">0.00%</div>
+      <div class="pct-note">of sell price</div>
+    </div>
+  </div>
+
+  <footer>
+    Tier 2 rebate = % below cost sold at, capped at 25%. No rebate applies above cost.<br>
+    All figures recalculate live — nothing is saved or sent anywhere.
+  </footer>
+
+</div>
+
+<script>
+  const costInput = document.getElementById('cost');
+  const sellInput = document.getElementById('sell');
+
+  function fmtMoney(n) {
+    const sign = n < 0 ? '-' : '';
+    return sign + '$' + Math.abs(n).toFixed(2);
+  }
+
+  function fmtPct(n) {
+    return n.toFixed(2) + '%';
+  }
+
+  // Solve for the sell price that produces a given target gross-profit %.
+  // Three regimes depending on where the resulting price lands:
+  //   A) S >= cost            -> tier 2 = 0
+  //   B) 0.75*cost <= S < cost -> tier 2 active, not yet capped
+  //   C) S < 0.75*cost         -> tier 2 capped at 25%
+  function solveSellPrice(cost, targetPct) {
+    if (!cost || cost <= 0) return null;
+    const P = targetPct; // decimal, e.g. 0 or 0.10
+
+    if (P > 0) {
+      // Case B candidate
+      const S_B = (0.125 * cost) / P;
+      if (S_B >= 0.75 * cost - 1e-9 && S_B < cost + 1e-9) {
+        return S_B;
+      }
+      // Case A candidate
+      if (P < 1) {
+        const S_A = (0.875 * cost) / (1 - P);
+        if (S_A >= cost - 1e-9) return S_A;
+      }
+    }
+    // Case C candidate (covers P <= 0 and any P that didn't fit above)
+    if (P < 1) {
+      const S_C = (0.625 * cost) / (1 - P);
+      if (S_C < 0.75 * cost + 1e-9) return S_C;
+    }
+    return null;
+  }
+
+  function calc() {
+    const cost = parseFloat(costInput.value);
+    const sell = parseFloat(sellInput.value);
+
+    if (isNaN(cost) || isNaN(sell) || cost <= 0) {
+      return null;
+    }
+
+    const tier1 = 0.125 * cost;
+
+    let belowPct = 0;
+    if (sell < cost) {
+      belowPct = (cost - sell) / cost;
+    }
+    const tier2Pct = Math.min(belowPct, 0.25);
+    const tier2 = tier2Pct * cost;
+
+    const totalRebate = tier1 + tier2;
+    const effCost = cost - totalRebate;
+    const grossProfitDollar = sell - effCost;
+    const grossProfitPct = sell !== 0 ? (grossProfitDollar / sell) * 100 : 0;
+
+    return {
+      cost, sell, tier1, tier2, tier2Pct, totalRebate, effCost,
+      grossProfitDollar, grossProfitPct, belowPct
+    };
+  }
+
+  function render() {
+    const r = calc();
+    const pill = document.getElementById('statusPill');
+    const statusText = document.getElementById('statusText');
+
+    // Targets only need a valid cost — render them independently of sell price.
+    const costVal = parseFloat(costInput.value);
+    if (!isNaN(costVal) && costVal > 0) {
+      const breakEven = solveSellPrice(costVal, 0);
+      const tenPct = solveSellPrice(costVal, 0.10);
+      document.getElementById('outBreakEven').textContent = breakEven !== null ? fmtMoney(breakEven) : '—';
+      document.getElementById('outTenPct').textContent = tenPct !== null ? fmtMoney(tenPct) : '—';
+    } else {
+      document.getElementById('outBreakEven').textContent = '—';
+      document.getElementById('outTenPct').textContent = '—';
+    }
+
+    if (!r) {
+      document.getElementById('outCost').textContent = '—';
+      document.getElementById('outTier1').textContent = '—';
+      document.getElementById('outTier2').textContent = '—';
+      document.getElementById('outEffCost').textContent = '—';
+      document.getElementById('outSell').textContent = '—';
+      document.getElementById('outProfitDollar').textContent = '—';
+      document.getElementById('outProfitPct').textContent = '—';
+      pill.className = 'status-pill';
+      statusText.textContent = isNaN(costVal) || costVal <= 0 ? 'Enter a cost to begin' : 'Enter a sell price to see profit';
+      document.getElementById('barTrack').innerHTML = '';
+      return;
+    }
+
+    document.getElementById('outCost').textContent = fmtMoney(r.cost);
+    document.getElementById('outTier1').textContent = fmtMoney(r.tier1);
+    document.getElementById('outTier2').textContent = fmtMoney(r.tier2);
+    document.getElementById('outEffCost').textContent = fmtMoney(r.effCost);
+    document.getElementById('outSell').textContent = fmtMoney(r.sell);
+    document.getElementById('outProfitDollar').textContent = fmtMoney(r.grossProfitDollar);
+    document.getElementById('outProfitPct').textContent = fmtPct(r.grossProfitPct);
+
+    const tier2Note = document.getElementById('tier2Note');
+    if (r.sell >= r.cost) {
+      tier2Note.textContent = 'sold at or above cost — no tier 2 rebate';
+    } else if (r.belowPct >= 0.25) {
+      tier2Note.textContent = (r.belowPct * 100).toFixed(1) + '% below cost — capped at 25%';
+    } else {
+      tier2Note.textContent = (r.belowPct * 100).toFixed(1) + '% below cost';
+    }
+
+    if (r.sell < r.cost) {
+      pill.className = 'status-pill below';
+      statusText.textContent = 'Selling below cost — tier 2 active';
+    } else if (r.sell === r.cost) {
+      pill.className = 'status-pill';
+      statusText.textContent = 'Selling at cost — tier 1 only';
+    } else {
+      pill.className = 'status-pill above';
+      statusText.textContent = 'Selling above cost — tier 1 only';
+    }
+
+    const resultBox = document.getElementById('resultBox');
+    resultBox.className = 'result' + (r.grossProfitDollar < 0 ? ' negative' : '');
+
+    renderBar(r);
+  }
+
+  function renderBar(r) {
+    const track = document.getElementById('barTrack');
+    track.innerHTML = '';
+
+    // Scale: span from min(0, sell, effCost) to max(cost, sell) with a touch of padding
+    const lo = Math.min(0, r.sell, r.effCost, r.cost);
+    const hi = Math.max(r.cost, r.sell, r.effCost) * 1.0;
+    const span = (hi - lo) || 1;
+    const pad = span * 0.04;
+    const scaleLo = lo - pad;
+    const scaleHi = hi + pad;
+    const scaleSpan = scaleHi - scaleLo;
+
+    function pctOf(v) { return ((v - scaleLo) / scaleSpan) * 100; }
+
+    // Segments along the cost->effCost reduction, drawn from effCost to cost
+    const t1Start = r.cost - r.tier1; // after tier1 removed
+    const t2Start = r.effCost; // after tier1+tier2 removed (== t1Start - tier2)
+
+    // Tier1 segment: from t1Start to cost
+    const t1Left = pctOf(t1Start);
+    const t1Width = pctOf(r.cost) - t1Left;
+
+    // Tier2 segment: from t2Start to t1Start
+    const t2Left = pctOf(t2Start);
+    const t2Width = pctOf(t1Start) - t2Left;
+
+    const segT1 = document.createElement('div');
+    segT1.className = 'bar-seg t1';
+    segT1.style.left = t1Left + '%';
+    segT1.style.width = Math.max(t1Width, 0) + '%';
+    track.appendChild(segT1);
+
+    if (r.tier2 > 0) {
+      const segT2 = document.createElement('div');
+      segT2.className = 'bar-seg t2';
+      segT2.style.left = t2Left + '%';
+      segT2.style.width = Math.max(t2Width, 0) + '%';
+      track.appendChild(segT2);
+    }
+
+    // Profit/loss hatch between effCost and sell
+    const profitLeft = pctOf(Math.min(r.effCost, r.sell));
+    const profitWidth = Math.abs(pctOf(r.sell) - pctOf(r.effCost));
+    const segP = document.createElement('div');
+    segP.className = 'bar-seg profit';
+    segP.style.left = profitLeft + '%';
+    segP.style.width = profitWidth + '%';
+    track.appendChild(segP);
+
+    // Markers: cost, sell, effective cost
+    addMarker(track, pctOf(r.cost), 'Cost', pctOf(r.cost) > 85);
+    addMarker(track, pctOf(r.sell), 'Sell', false);
+    if (Math.abs(pctOf(r.effCost) - pctOf(r.sell)) > 4 && Math.abs(pctOf(r.effCost) - pctOf(r.cost)) > 4) {
+      addMarker(track, pctOf(r.effCost), 'Eff. cost', false);
+    }
+  }
+
+  function addMarker(track, leftPct, label, alignRight) {
+    const m = document.createElement('div');
+    m.className = 'bar-marker';
+    m.style.left = leftPct + '%';
+    const l = document.createElement('div');
+    l.className = 'mlabel';
+    l.textContent = label;
+    if (alignRight) l.style.transform = 'translateX(-90%)';
+    m.appendChild(l);
+    track.appendChild(m);
+  }
+
+  function updateClock() {
+    const now = new Date();
+    document.getElementById('clock').textContent = now.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  costInput.addEventListener('input', render);
+  sellInput.addEventListener('input', render);
+
+  document.getElementById('resetBtn').addEventListener('click', function() {
+    costInput.value = '';
+    sellInput.value = '';
+    render();
+    costInput.focus();
+  });
+
+  updateClock();
+  render();
+</script>
+
+</body>
+</html>

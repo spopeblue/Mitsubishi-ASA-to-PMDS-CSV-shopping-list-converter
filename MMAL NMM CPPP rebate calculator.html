@@ -278,6 +278,16 @@
   .row.subtotal { background: #fbfaf8; }
   .row.subtotal .rvalue { font-weight: 700; }
 
+  .row.highlight {
+    background: var(--tier1-soft);
+  }
+  .row.highlight .rlabel { color: var(--tier1); font-weight: 600; }
+  .rvalue-emphasis {
+    color: var(--tier1) !important;
+    font-weight: 800 !important;
+    font-size: 20px !important;
+  }
+
   .result {
     background: var(--ink);
     color: var(--paper);
@@ -388,11 +398,11 @@
       <div class="rvalue" id="outCost">$0.00</div>
     </div>
     <div class="row tier1">
-      <div class="rlabel">Tier 1 rebate<span class="note">12.5% of cost, always applies</span></div>
+      <div class="rlabel">Tier 1 rebate<span class="note" id="tier1Note">12.5% of cost, if margin &lt; 15%</span></div>
       <div class="rvalue" id="outTier1">$0.00</div>
     </div>
     <div class="row tier2">
-      <div class="rlabel">Tier 2 rebate<span class="note" id="tier2Note">% below cost, capped at 25%</span></div>
+      <div class="rlabel">Tier 2 rebate<span class="note" id="tier2Note">0–25% below cost, if margin &lt; 15%</span></div>
       <div class="rvalue" id="outTier2">$0.00</div>
     </div>
     <div class="row subtotal">
@@ -413,6 +423,14 @@
     <div class="row">
       <div class="rlabel">Sell price for 10% margin<span class="note">price for 10% gross profit</span></div>
       <div class="rvalue" id="outTenPct">$0.00</div>
+    </div>
+    <div class="row highlight">
+      <div class="rlabel">Sell price for 12.5% margin<span class="note">price for 12.5% gross profit</span></div>
+      <div class="rvalue rvalue-emphasis" id="outTwelveHalfPct">$0.00</div>
+    </div>
+    <div class="row">
+      <div class="rlabel">Sell price for 15% margin<span class="note">price for 15% gross profit — rebate eligibility cutoff</span></div>
+      <div class="rvalue" id="outFifteenPct">$0.00</div>
     </div>
   </div>
 
@@ -448,13 +466,20 @@
   }
 
   // Solve for the sell price that produces a given target gross-profit %.
-  // Three regimes depending on where the resulting price lands:
-  //   A) S >= cost            -> tier 2 = 0
+  // Eligibility gate first: if target >= 15%, the resulting raw margin will be
+  // >= 15%, so the rebate program doesn't apply at all -> simple markup formula.
+  // Below 15%, fall through to the original three rebate-active regimes:
+  //   A) S >= cost             -> tier 2 = 0
   //   B) 0.75*cost <= S < cost -> tier 2 active, not yet capped
   //   C) S < 0.75*cost         -> tier 2 capped at 25%
   function solveSellPrice(cost, targetPct) {
     if (!cost || cost <= 0) return null;
-    const P = targetPct; // decimal, e.g. 0 or 0.10
+    const P = targetPct; // decimal, e.g. 0, 0.10, 0.125, 0.15
+
+    if (P >= 0.15) {
+      if (P < 1) return cost / (1 - P);
+      return null;
+    }
 
     if (P > 0) {
       // Case B candidate
@@ -484,14 +509,20 @@
       return null;
     }
 
-    const tier1 = 0.125 * cost;
+    // Rebate program eligibility gate: only applies if raw margin (no rebate) is below 15%.
+    const rawMargin = sell !== 0 ? (sell - cost) / sell : null;
+    const rebateEligible = rawMargin !== null && rawMargin < 0.15;
 
-    let belowPct = 0;
-    if (sell < cost) {
-      belowPct = (cost - sell) / cost;
+    let tier1 = 0, tier2 = 0, belowPct = 0, tier2Pct = 0;
+
+    if (rebateEligible) {
+      tier1 = 0.125 * cost;
+      if (sell < cost) {
+        belowPct = (cost - sell) / cost;
+      }
+      tier2Pct = Math.min(belowPct, 0.25);
+      tier2 = tier2Pct * cost;
     }
-    const tier2Pct = Math.min(belowPct, 0.25);
-    const tier2 = tier2Pct * cost;
 
     const totalRebate = tier1 + tier2;
     const effCost = cost - totalRebate;
@@ -500,7 +531,7 @@
 
     return {
       cost, sell, tier1, tier2, tier2Pct, totalRebate, effCost,
-      grossProfitDollar, grossProfitPct, belowPct
+      grossProfitDollar, grossProfitPct, belowPct, rawMargin, rebateEligible
     };
   }
 
@@ -514,11 +545,17 @@
     if (!isNaN(costVal) && costVal > 0) {
       const breakEven = solveSellPrice(costVal, 0);
       const tenPct = solveSellPrice(costVal, 0.10);
+      const twelveHalfPct = solveSellPrice(costVal, 0.125);
+      const fifteenPct = solveSellPrice(costVal, 0.15);
       document.getElementById('outBreakEven').textContent = breakEven !== null ? fmtMoney(breakEven) : '—';
       document.getElementById('outTenPct').textContent = tenPct !== null ? fmtMoney(tenPct) : '—';
+      document.getElementById('outTwelveHalfPct').textContent = twelveHalfPct !== null ? fmtMoney(twelveHalfPct) : '—';
+      document.getElementById('outFifteenPct').textContent = fifteenPct !== null ? fmtMoney(fifteenPct) : '—';
     } else {
       document.getElementById('outBreakEven').textContent = '—';
       document.getElementById('outTenPct').textContent = '—';
+      document.getElementById('outTwelveHalfPct').textContent = '—';
+      document.getElementById('outFifteenPct').textContent = '—';
     }
 
     if (!r) {
@@ -543,24 +580,35 @@
     document.getElementById('outProfitDollar').textContent = fmtMoney(r.grossProfitDollar);
     document.getElementById('outProfitPct').textContent = fmtPct(r.grossProfitPct);
 
+    const tier1Note = document.getElementById('tier1Note');
     const tier2Note = document.getElementById('tier2Note');
-    if (r.sell >= r.cost) {
-      tier2Note.textContent = 'sold at or above cost — no tier 2 rebate';
-    } else if (r.belowPct >= 0.25) {
-      tier2Note.textContent = (r.belowPct * 100).toFixed(1) + '% below cost — capped at 25%';
+
+    if (!r.rebateEligible) {
+      tier1Note.textContent = 'margin ≥ 15% — rebate program does not apply';
+      tier2Note.textContent = 'margin ≥ 15% — rebate program does not apply';
     } else {
-      tier2Note.textContent = (r.belowPct * 100).toFixed(1) + '% below cost';
+      tier1Note.textContent = 'margin < 15% — 12.5% of cost applies';
+      if (r.sell >= r.cost) {
+        tier2Note.textContent = 'sold at or above cost — no tier 2 rebate';
+      } else if (r.belowPct >= 0.25) {
+        tier2Note.textContent = (r.belowPct * 100).toFixed(1) + '% below cost — capped at 25%';
+      } else {
+        tier2Note.textContent = (r.belowPct * 100).toFixed(1) + '% below cost';
+      }
     }
 
-    if (r.sell < r.cost) {
+    if (!r.rebateEligible) {
+      pill.className = 'status-pill';
+      statusText.textContent = 'Margin ≥ 15% — no rebate applies';
+    } else if (r.sell < r.cost) {
       pill.className = 'status-pill below';
       statusText.textContent = 'Selling below cost — tier 2 active';
     } else if (r.sell === r.cost) {
-      pill.className = 'status-pill';
+      pill.className = 'status-pill below';
       statusText.textContent = 'Selling at cost — tier 1 only';
     } else {
-      pill.className = 'status-pill above';
-      statusText.textContent = 'Selling above cost — tier 1 only';
+      pill.className = 'status-pill below';
+      statusText.textContent = 'Margin < 15% — tier 1 only';
     }
 
     const resultBox = document.getElementById('resultBox');

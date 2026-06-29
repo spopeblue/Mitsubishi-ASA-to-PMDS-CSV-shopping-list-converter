@@ -6,18 +6,18 @@
 <title>Rebate Margin Calculator</title>
 <style>
   :root {
-    --ink: #1b1f23;
-    --ink-soft: #5a6168;
-    --paper: #f6f5f2;
-    --panel: #ffffff;
-    --line: #d8d5cd;
-    --tier1: #2c6e63;
-    --tier1-soft: #e3efec;
-    --tier2: #c0622b;
-    --tier2-soft: #f7e9de;
-    --profit: #1b1f23;
-    --profit-pos: #2c6e63;
-    --profit-neg: #b3392c;
+    --ink: #ececea;
+    --ink-soft: #9a9fa4;
+    --paper: #1c1e21;
+    --panel: #262932;
+    --line: #3a3d44;
+    --tier1: #4fb3a0;
+    --tier1-soft: #1f3530;
+    --tier2: #e08a4f;
+    --tier2-soft: #3a2a1d;
+    --profit: #ececea;
+    --profit-pos: #4fb3a0;
+    --profit-neg: #e0665a;
     --mono: 'IBM Plex Mono', 'SF Mono', Menlo, Consolas, monospace;
     --sans: 'IBM Plex Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
@@ -113,7 +113,7 @@
     font-weight: 500;
   }
 
-  .field input::placeholder { color: #c4c0b6; }
+  .field input::placeholder { color: #5c5f66; }
 
   /* remove number spinners */
   input[type=number]::-webkit-outer-spin-button,
@@ -205,7 +205,7 @@
   .bar-track {
     position: relative;
     height: 34px;
-    background: #ece9e2;
+    background: #15171a;
     border-radius: 2px;
     overflow: hidden;
     border: 1px solid var(--line);
@@ -219,7 +219,7 @@
 
   .bar-seg.t1 { background: var(--tier1); }
   .bar-seg.t2 { background: var(--tier2); }
-  .bar-seg.profit { background: repeating-linear-gradient(45deg, var(--ink) 0, var(--ink) 1px, transparent 1px, transparent 7px); opacity: 0.18; }
+  .bar-seg.profit { background: repeating-linear-gradient(45deg, var(--ink) 0, var(--ink) 1px, transparent 1px, transparent 7px); opacity: 0.28; }
 
   .bar-marker {
     position: absolute;
@@ -270,12 +270,12 @@
   .row:last-child { border-bottom: none; }
 
   .row .rlabel { color: var(--ink-soft); }
-  .row .rlabel .note { display: block; font-size: 11px; color: #9a958a; margin-top: 2px; }
+  .row .rlabel .note { display: block; font-size: 11px; color: #6e7177; margin-top: 2px; }
   .row .rvalue { font-family: var(--mono); font-weight: 600; font-size: 15px; }
 
   .row.tier1 .rvalue { color: var(--tier1); }
   .row.tier2 .rvalue { color: var(--tier2); }
-  .row.subtotal { background: #fbfaf8; }
+  .row.subtotal { background: #20232a; }
   .row.subtotal .rvalue { font-weight: 700; }
 
   .row.highlight {
@@ -286,6 +286,37 @@
     color: var(--tier1) !important;
     font-weight: 800 !important;
     font-size: 20px !important;
+  }
+
+  .ideal-range {
+    background: var(--tier1-soft);
+    border: 1px solid var(--tier1);
+    border-radius: 3px;
+    padding: 18px 20px;
+    margin-bottom: 20px;
+  }
+  .ideal-range-label {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--tier1);
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .ideal-range-text {
+    font-size: 15px;
+    color: var(--ink);
+    line-height: 1.5;
+  }
+  .ideal-range-text #idealLo,
+  .ideal-range-text #idealHi {
+    font-family: var(--mono);
+    font-weight: 700;
+  }
+  .ideal-range-text .ideal-pct {
+    color: var(--tier1);
+    font-weight: 800;
+    font-size: 20px;
   }
 
   .result {
@@ -338,7 +369,7 @@
   footer {
     margin-top: 24px;
     font-size: 11px;
-    color: #9a958a;
+    color: #6e7177;
     text-align: center;
     line-height: 1.6;
   }
@@ -383,12 +414,19 @@
     <span class="status-pill" id="statusPill"><span class="dot"></span><span id="statusText">—</span></span>
   </div>
 
+  <div class="ideal-range" id="idealRangeBox">
+    <div class="ideal-range-label">Ideal price match range</div>
+    <div class="ideal-range-text" id="idealRangeText">
+      Selling anywhere between <span id="idealLo">$0.00</span> and <span id="idealHi">$0.00</span> will gross exactly <span class="ideal-pct">12.5%</span> margin.
+    </div>
+  </div>
+
   <div class="bridge">
     <div class="bridge-label">Cost → Sell bridge</div>
     <div class="bar-track" id="barTrack"></div>
     <div class="legend">
-      <span class="item"><span class="swatch t1"></span> Tier 1 rebate (flat 12.5%)</span>
-      <span class="item"><span class="swatch t2"></span> Tier 2 rebate (0–25%, below-cost selling)</span>
+      <span class="item"><span class="swatch t1"></span> CPPP rebate (flat 12.5% of cost)</span>
+      <span class="item"><span class="swatch t2"></span> NMP rebate (0–25% of cost, below-cost selling)</span>
     </div>
   </div>
 
@@ -398,11 +436,11 @@
       <div class="rvalue" id="outCost">$0.00</div>
     </div>
     <div class="row tier1">
-      <div class="rlabel">Tier 1 rebate<span class="note" id="tier1Note">12.5% of cost, if margin &lt; 15%</span></div>
+      <div class="rlabel">CPPP rebate<span class="note" id="tier1Note">12.5% of cost, if margin &lt; 15%</span></div>
       <div class="rvalue" id="outTier1">$0.00</div>
     </div>
     <div class="row tier2">
-      <div class="rlabel">Tier 2 rebate<span class="note" id="tier2Note">0–25% below cost, if margin &lt; 15%</span></div>
+      <div class="rlabel">NMP rebate<span class="note" id="tier2Note">0–25% of cost, if margin &lt; 15%</span></div>
       <div class="rvalue" id="outTier2">$0.00</div>
     </div>
     <div class="row subtotal">
@@ -413,23 +451,23 @@
       <div class="rlabel">Sell price<span class="note">what the customer pays</span></div>
       <div class="rvalue" id="outSell">$0.00</div>
     </div>
+    <div class="row subtotal">
+      <div class="rlabel">Total dealer return<span class="note">sale proceeds + both rebates collected</span></div>
+      <div class="rvalue" id="outTotalReturn">$0.00</div>
+    </div>
   </div>
 
   <div class="breakdown" id="targetBreakdown">
     <div class="row">
-      <div class="rlabel">Break-even sell price<span class="note">price for 0% gross profit</span></div>
+      <div class="rlabel">Break-even sell price<span class="note">price for 0% margin</span></div>
       <div class="rvalue" id="outBreakEven">$0.00</div>
     </div>
     <div class="row">
-      <div class="rlabel">Sell price for 10% margin<span class="note">price for 10% gross profit</span></div>
+      <div class="rlabel">Sell price for 10% margin<span class="note">price for 10% margin</span></div>
       <div class="rvalue" id="outTenPct">$0.00</div>
     </div>
-    <div class="row highlight">
-      <div class="rlabel">Sell price for 12.5% margin<span class="note">price for 12.5% gross profit</span></div>
-      <div class="rvalue rvalue-emphasis" id="outTwelveHalfPct">$0.00</div>
-    </div>
     <div class="row">
-      <div class="rlabel">Sell price for 15% margin<span class="note">price for 15% gross profit — rebate eligibility cutoff</span></div>
+      <div class="rlabel">Sell price for 15% margin<span class="note">price for 15% margin — rebate eligibility cutoff</span></div>
       <div class="rvalue" id="outFifteenPct">$0.00</div>
     </div>
   </div>
@@ -441,12 +479,13 @@
     </div>
     <div class="result-pct">
       <div id="outProfitPct">0.00%</div>
-      <div class="pct-note">of sell price</div>
+      <div class="pct-note">of cost</div>
     </div>
   </div>
 
   <footer>
-    Tier 2 rebate = % below cost sold at, capped at 25%. No rebate applies above cost.<br>
+    Margin % = profit ÷ cost. Rebates only apply when margin is below 15%.<br>
+    CPPP = flat 12.5% of cost. NMP = up to 25% of cost, lifting you back toward cost.<br>
     All figures recalculate live — nothing is saved or sent anywhere.
   </footer>
 
@@ -465,40 +504,34 @@
     return n.toFixed(2) + '%';
   }
 
-  // Solve for the sell price that produces a given target gross-profit %.
-  // Eligibility gate first: if target >= 15%, the resulting raw margin will be
-  // >= 15%, so the rebate program doesn't apply at all -> simple markup formula.
-  // Below 15%, fall through to the original three rebate-active regimes:
-  //   A) S >= cost             -> tier 2 = 0
-  //   B) 0.75*cost <= S < cost -> tier 2 active, not yet capped
-  //   C) S < 0.75*cost         -> tier 2 capped at 25%
+  // Solve for the sell price that produces a given target margin %, where
+  // margin = profit / cost (matching the OEM's own convention).
+  //
+  // Regimes (cost = C, target = P as a decimal):
+  //   - P >= 0.15            : no rebate applies at all -> S = C*(1+P)
+  //   - P == 0.125 exactly   : an entire RANGE of sell prices [0.75C, C) all give
+  //                            exactly 12.5% margin, because CPPP alone (flat 12.5%
+  //                            of cost) determines profit in that whole band.
+  //                            Returns {lo, hi} instead of a single number.
+  //   - 0.125 < P < 0.15     : S >= cost, NMP=0, CPPP lifts margin above 12.5%
+  //                            -> S = C*(0.875+P)
+  //   - P < 0.125            : S < 0.75C, NMP capped at 25% of cost
+  //                            -> S = C*(0.625+P)
   function solveSellPrice(cost, targetPct) {
     if (!cost || cost <= 0) return null;
-    const P = targetPct; // decimal, e.g. 0, 0.10, 0.125, 0.15
+    const P = targetPct;
 
+    if (Math.abs(P - 0.125) < 1e-9) {
+      return { isRange: true, lo: 0.75 * cost, hi: cost };
+    }
     if (P >= 0.15) {
-      if (P < 1) return cost / (1 - P);
-      return null;
+      return { isRange: false, value: cost * (1 + P) };
     }
-
-    if (P > 0) {
-      // Case B candidate
-      const S_B = (0.125 * cost) / P;
-      if (S_B >= 0.75 * cost - 1e-9 && S_B < cost + 1e-9) {
-        return S_B;
-      }
-      // Case A candidate
-      if (P < 1) {
-        const S_A = (0.875 * cost) / (1 - P);
-        if (S_A >= cost - 1e-9) return S_A;
-      }
+    if (P > 0.125) {
+      return { isRange: false, value: cost * (0.875 + P) };
     }
-    // Case C candidate (covers P <= 0 and any P that didn't fit above)
-    if (P < 1) {
-      const S_C = (0.625 * cost) / (1 - P);
-      if (S_C < 0.75 * cost + 1e-9) return S_C;
-    }
-    return null;
+    // P < 0.125 (includes 0 and negative targets)
+    return { isRange: false, value: cost * (0.625 + P) };
   }
 
   function calc() {
@@ -509,29 +542,33 @@
       return null;
     }
 
-    // Rebate program eligibility gate: only applies if raw margin (no rebate) is below 15%.
-    const rawMargin = sell !== 0 ? (sell - cost) / sell : null;
-    const rebateEligible = rawMargin !== null && rawMargin < 0.15;
+    // Rebate eligibility gate, per OEM: margin = (Sell - Cost) / Cost.
+    // If that's 15% or higher, no rebate applies at all.
+    const rawMarginOnCost = (sell - cost) / cost;
+    const rebateEligible = rawMarginOnCost < 0.15 - 1e-9;
 
     let tier1 = 0, tier2 = 0, belowPct = 0, tier2Pct = 0;
 
     if (rebateEligible) {
-      tier1 = 0.125 * cost;
+      tier1 = 0.125 * cost; // CPPP: flat 12.5% of cost
       if (sell < cost) {
         belowPct = (cost - sell) / cost;
       }
       tier2Pct = Math.min(belowPct, 0.25);
-      tier2 = tier2Pct * cost;
+      tier2 = tier2Pct * cost; // NMP: lifts back toward cost, capped at 25% of cost
     }
 
     const totalRebate = tier1 + tier2;
     const effCost = cost - totalRebate;
     const grossProfitDollar = sell - effCost;
-    const grossProfitPct = sell !== 0 ? (grossProfitDollar / sell) * 100 : 0;
+    // Margin %, per OEM convention, is profit as a % of COST, not of sell price.
+    const grossProfitPct = (grossProfitDollar / cost) * 100;
+    const totalDealerReturn = sell + tier1 + tier2;
 
     return {
       cost, sell, tier1, tier2, tier2Pct, totalRebate, effCost,
-      grossProfitDollar, grossProfitPct, belowPct, rawMargin, rebateEligible
+      grossProfitDollar, grossProfitPct, belowPct, rawMarginOnCost, rebateEligible,
+      totalDealerReturn
     };
   }
 
@@ -545,17 +582,19 @@
     if (!isNaN(costVal) && costVal > 0) {
       const breakEven = solveSellPrice(costVal, 0);
       const tenPct = solveSellPrice(costVal, 0.10);
-      const twelveHalfPct = solveSellPrice(costVal, 0.125);
+      const idealRange = solveSellPrice(costVal, 0.125); // always {isRange: true, lo, hi}
       const fifteenPct = solveSellPrice(costVal, 0.15);
-      document.getElementById('outBreakEven').textContent = breakEven !== null ? fmtMoney(breakEven) : '—';
-      document.getElementById('outTenPct').textContent = tenPct !== null ? fmtMoney(tenPct) : '—';
-      document.getElementById('outTwelveHalfPct').textContent = twelveHalfPct !== null ? fmtMoney(twelveHalfPct) : '—';
-      document.getElementById('outFifteenPct').textContent = fifteenPct !== null ? fmtMoney(fifteenPct) : '—';
+      document.getElementById('outBreakEven').textContent = fmtMoney(breakEven.value);
+      document.getElementById('outTenPct').textContent = fmtMoney(tenPct.value);
+      document.getElementById('outFifteenPct').textContent = fmtMoney(fifteenPct.value);
+      document.getElementById('idealLo').textContent = fmtMoney(idealRange.lo);
+      document.getElementById('idealHi').textContent = fmtMoney(idealRange.hi);
+      document.getElementById('idealRangeBox').style.display = '';
     } else {
       document.getElementById('outBreakEven').textContent = '—';
       document.getElementById('outTenPct').textContent = '—';
-      document.getElementById('outTwelveHalfPct').textContent = '—';
       document.getElementById('outFifteenPct').textContent = '—';
+      document.getElementById('idealRangeBox').style.display = 'none';
     }
 
     if (!r) {
@@ -566,6 +605,7 @@
       document.getElementById('outSell').textContent = '—';
       document.getElementById('outProfitDollar').textContent = '—';
       document.getElementById('outProfitPct').textContent = '—';
+      document.getElementById('outTotalReturn').textContent = '—';
       pill.className = 'status-pill';
       statusText.textContent = isNaN(costVal) || costVal <= 0 ? 'Enter a cost to begin' : 'Enter a sell price to see profit';
       document.getElementById('barTrack').innerHTML = '';
@@ -579,6 +619,7 @@
     document.getElementById('outSell').textContent = fmtMoney(r.sell);
     document.getElementById('outProfitDollar').textContent = fmtMoney(r.grossProfitDollar);
     document.getElementById('outProfitPct').textContent = fmtPct(r.grossProfitPct);
+    document.getElementById('outTotalReturn').textContent = fmtMoney(r.totalDealerReturn);
 
     const tier1Note = document.getElementById('tier1Note');
     const tier2Note = document.getElementById('tier2Note');
@@ -589,7 +630,7 @@
     } else {
       tier1Note.textContent = 'margin < 15% — 12.5% of cost applies';
       if (r.sell >= r.cost) {
-        tier2Note.textContent = 'sold at or above cost — no tier 2 rebate';
+        tier2Note.textContent = 'sold at or above cost — no NMP rebate';
       } else if (r.belowPct >= 0.25) {
         tier2Note.textContent = (r.belowPct * 100).toFixed(1) + '% below cost — capped at 25%';
       } else {
@@ -602,13 +643,13 @@
       statusText.textContent = 'Margin ≥ 15% — no rebate applies';
     } else if (r.sell < r.cost) {
       pill.className = 'status-pill below';
-      statusText.textContent = 'Selling below cost — tier 2 active';
+      statusText.textContent = 'Selling below cost — NMP active';
     } else if (r.sell === r.cost) {
       pill.className = 'status-pill below';
-      statusText.textContent = 'Selling at cost — tier 1 only';
+      statusText.textContent = 'Selling at cost — CPPP only';
     } else {
       pill.className = 'status-pill below';
-      statusText.textContent = 'Margin < 15% — tier 1 only';
+      statusText.textContent = 'Margin < 15% — CPPP only';
     }
 
     const resultBox = document.getElementById('resultBox');

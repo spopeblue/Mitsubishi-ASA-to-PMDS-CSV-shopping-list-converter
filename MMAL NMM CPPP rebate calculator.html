@@ -329,6 +329,7 @@
     align-items: center;
     flex-wrap: wrap;
     gap: 16px;
+    margin-bottom: 20px;
   }
 
   .result.negative { background: var(--profit-neg); }
@@ -421,6 +422,33 @@
     </div>
   </div>
 
+  <div class="result" id="resultBox">
+    <div>
+      <div class="result-label">Gross profit</div>
+      <div class="result-dollar" id="outProfitDollar">$0.00</div>
+    </div>
+    <div class="result-pct">
+      <div id="outProfitPct">0.00%</div>
+      <div class="pct-note">of cost</div>
+    </div>
+  </div>
+
+
+  <div class="breakdown" id="targetBreakdown">
+    <div class="row">
+      <div class="rlabel">Break-even sell price<span class="note">price for 0% margin</span></div>
+      <div class="rvalue" id="outBreakEven">$0.00</div>
+    </div>
+    <div class="row">
+      <div class="rlabel">Sell price for 10% margin<span class="note">price for 10% margin</span></div>
+      <div class="rvalue" id="outTenPct">$0.00</div>
+    </div>
+    <div class="row">
+      <div class="rlabel">Sell price for 15% margin<span class="note">price for 15% margin — rebate eligibility cutoff</span></div>
+      <div class="rvalue" id="outFifteenPct">$0.00</div>
+    </div>
+  </div>
+
   <div class="bridge">
     <div class="bridge-label">Cost → Sell bridge</div>
     <div class="bar-track" id="barTrack"></div>
@@ -454,32 +482,6 @@
     <div class="row subtotal">
       <div class="rlabel">Total dealer return<span class="note">sale proceeds + both rebates collected</span></div>
       <div class="rvalue" id="outTotalReturn">$0.00</div>
-    </div>
-  </div>
-
-  <div class="breakdown" id="targetBreakdown">
-    <div class="row">
-      <div class="rlabel">Break-even sell price<span class="note">price for 0% margin</span></div>
-      <div class="rvalue" id="outBreakEven">$0.00</div>
-    </div>
-    <div class="row">
-      <div class="rlabel">Sell price for 10% margin<span class="note">price for 10% margin</span></div>
-      <div class="rvalue" id="outTenPct">$0.00</div>
-    </div>
-    <div class="row">
-      <div class="rlabel">Sell price for 15% margin<span class="note">price for 15% margin — rebate eligibility cutoff</span></div>
-      <div class="rvalue" id="outFifteenPct">$0.00</div>
-    </div>
-  </div>
-
-  <div class="result" id="resultBox">
-    <div>
-      <div class="result-label">Gross profit</div>
-      <div class="result-dollar" id="outProfitDollar">$0.00</div>
-    </div>
-    <div class="result-pct">
-      <div id="outProfitPct">0.00%</div>
-      <div class="pct-note">of cost</div>
     </div>
   </div>
 
